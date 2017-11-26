@@ -1,5 +1,6 @@
 #include <array>
 #include <cstddef>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -67,6 +68,14 @@ public:
     contents[local_idx(idx, lvls)]->destructive_set(idx, lvls - 1, some);
   }
 
+  template <typename U> Branch<U> bulk_update(std::function<U(T)> &f) {
+    array<shared_ptr<Node<U>>, M> new_contents =
+        array<shared_ptr<Node<U>>, M>();
+    for (uint32_t i = 0; i < M; i++) {
+      new_contents[i] = make_shared(f(contents[i].get()));
+    }
+  }
+
   array<shared_ptr<Node<T>>, M> contents;
 };
 
@@ -74,6 +83,14 @@ template <class T> class Leaf : public Node<T> {
 public:
   explicit Leaf() { contents = array<T, M>(); }
   explicit Leaf(array<T, M> c) : contents(c) {}
+
+  template <typename U> Leaf<U> bulk_update(std::function<U(T)> &f) {
+    array<U, M> new_contents = array<U, M>();
+    for (uint32_t i = 0; i < M; i++) {
+      new_contents[i] = f(contents[i]);
+    }
+    return Leaf<U>(new_contents);
+  }
 
   T get(uint32_t idx, uint32_t lvls) { return contents[local_idx(idx, lvls)]; }
 
@@ -170,6 +187,8 @@ public:
       return IMVector(new_root, new_size, lvls);
     }
   }
+
+  void pop_back() { return IMVector(root, size - 1, lvls); }
 
   T get(uint32_t idx) { return root->get(idx, lvls - 1); }
 

@@ -21,6 +21,7 @@ int main() {
   }
   auto end = std::chrono::system_clock::now();
   std::chrono::duration<double> elapsed_seconds = end - start;
+  v.print_contents();
   cout << elapsed_seconds.count() << endl;
 }
 // v.print_contents();
